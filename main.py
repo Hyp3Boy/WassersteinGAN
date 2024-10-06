@@ -10,6 +10,7 @@ import torch.utils.data
 import torchvision.datasets as dset
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
+from torchvision.datasets.celeba import CelebA
 from torch.autograd import Variable
 import os
 import json
@@ -88,6 +89,16 @@ if __name__=="__main__":
                                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
                             ])
         )
+    elif opt.dataset == 'celeba':
+        dataset = CelebA(root=opt.dataroot, download=True,  split='train',
+                        transform=transforms.Compose([
+                            transforms.Scale(opt.imageSize),
+                            transforms.CenterCrop(opt.imageSize),
+                            transforms.ToTensor(),
+                            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+                        ])
+        )
+        
     assert dataset
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batchSize,
                                             shuffle=True, num_workers=int(opt.workers))
