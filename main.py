@@ -10,7 +10,6 @@ import torch.utils.data
 import torchvision.datasets as dset
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
-from torchvision.datasets.celeba import CelebA
 from torch.autograd import Variable
 import os
 import json
@@ -68,15 +67,15 @@ if __name__=="__main__":
         # folder dataset
         dataset = dset.ImageFolder(root=opt.dataroot,
                                 transform=transforms.Compose([
-                                    transforms.Scale(opt.imageSize),
+                                    transforms.Resize(opt.imageSize),
                                     transforms.CenterCrop(opt.imageSize),
                                     transforms.ToTensor(),
                                     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
                                 ]))
     elif opt.dataset == 'lsun':
-        dataset = dset.LSUN(db_path=opt.dataroot, classes=['bedroom_train'],
+        dataset = dset.LSUN(root=opt.dataroot, classes=['bedroom_train'],
                             transform=transforms.Compose([
-                                transforms.Scale(opt.imageSize),
+                                transforms.Resize(opt.imageSize),
                                 transforms.CenterCrop(opt.imageSize),
                                 transforms.ToTensor(),
                                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
@@ -84,15 +83,15 @@ if __name__=="__main__":
     elif opt.dataset == 'cifar10':
         dataset = dset.CIFAR10(root=opt.dataroot, download=True,
                             transform=transforms.Compose([
-                                transforms.Scale(opt.imageSize),
+                                transforms.Resize(opt.imageSize),
                                 transforms.ToTensor(),
                                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
                             ])
         )
     elif opt.dataset == 'celeba':
-        dataset = CelebA(root=opt.dataroot, download=True,  split='train',
+        dataset = dset.CelebA(root=opt.dataroot, download=True,  split='train',
                         transform=transforms.Compose([
-                            transforms.Scale(opt.imageSize),
+                            transforms.Resize(opt.imageSize),
                             transforms.CenterCrop(opt.imageSize),
                             transforms.ToTensor(),
                             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
@@ -196,7 +195,7 @@ if __name__=="__main__":
                 for p in netD.parameters():
                     p.data.clamp_(opt.clamp_lower, opt.clamp_upper)
 
-                data = data_iter.next()
+                data = next(data_iter)
                 i += 1
 
                 # train with real
@@ -214,8 +213,9 @@ if __name__=="__main__":
 
                 # train with fake
                 noise.resize_(opt.batchSize, nz, 1, 1).normal_(0, 1)
-                noisev = Variable(noise, volatile = True) # totally freeze netG
-                fake = Variable(netG(noisev).data)
+                with torch.no_grad():
+                    noisev = noise # totally freeze netG
+                    fake = netG(noisev).data
                 inputv = fake
                 errD_fake = netD(inputv)
                 errD_fake.backward(mone)
@@ -244,7 +244,8 @@ if __name__=="__main__":
             if gen_iterations % 500 == 0:
                 real_cpu = real_cpu.mul(0.5).add(0.5)
                 vutils.save_image(real_cpu, '{0}/real_samples.png'.format(opt.experiment))
-                fake = netG(Variable(fixed_noise, volatile=True))
+                with torch.no_grad():
+                    fake = netG(fixed_noise)
                 fake.data = fake.data.mul(0.5).add(0.5)
                 vutils.save_image(fake.data, '{0}/fake_samples_{1}.png'.format(opt.experiment, gen_iterations))
 
