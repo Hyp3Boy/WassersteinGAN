@@ -103,6 +103,7 @@ if __name__=="__main__":
                         transforms.Resize(opt.imageSize),
                         transforms.ToTensor(),
                         transforms.Normalize((0.5,), (0.5,)),
+                        transforms.Lambda(lambda x: x.expand(3, -1, -1))
                     ])
         )
         
