@@ -97,6 +97,14 @@ if __name__=="__main__":
                             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
                         ])
         )
+    elif opt.dataset == 'mnist': 
+        dataset = dset.MNIST(root=opt.dataroot, download=True, train=True,
+                    transform=transforms.Compose([
+                        transforms.Resize(opt.imageSize),
+                        transforms.ToTensor(),
+                        transforms.Normalize((0.5,), (0.5,)),
+                    ])
+        )
         
     assert dataset
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batchSize,
